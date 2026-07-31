@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Food Journal</title>
 
     <link rel="stylesheet" href="style.css">
@@ -19,9 +18,7 @@
 
             <h3 id="selectedLabel"></h3>
 
-            <input
-                id="dishInput"
-                placeholder="Dish">
+            <input id="dishInput" placeholder="Dish">
 
             <input
                 id="weightInput"
@@ -91,18 +88,64 @@
         <div class="header">
 
             <button id="prevWeek">
-                &lt;&lt;
+                <<
             </button>
 
             <h2 id="weekTitle"></h2>
 
             <button id="nextWeek">
-                &gt;&gt;
+                >>
             </button>
 
         </div>
 
         <div id="calendar"></div>
+
+        <div class="targets-panel">
+
+    <h3>Daily Targets</h3>
+
+    <div class="target-field">
+        <label for="targetCalories">
+            Daily Calories
+        </label>
+        <input
+            id="targetCalories"
+            type="number">
+    </div>
+
+    <div class="target-field">
+        <label for="targetProteinPercent">
+            Protein %
+        </label>
+        <input
+            id="targetProteinPercent"
+            type="number">
+    </div>
+
+    <div class="target-field">
+        <label for="targetCarbsPercent">
+            Carbs %
+        </label>
+        <input
+            id="targetCarbsPercent"
+            type="number">
+    </div>
+
+    <div class="target-field">
+        <label for="targetFatPercent">
+            Fat %
+        </label>
+        <input
+            id="targetFatPercent"
+            type="number">
+    </div>
+
+    <button id="saveTargetsBtn">
+        Save Targets
+    </button>
+
+</div>
 
     </div>
 
