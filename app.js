@@ -1,6 +1,9 @@
 const storageKey = "foodJournal";
+const settingsKey = "foodJournalSettings";
 
 let weekOffset = 0;
+let dayOffset = 0;
+
 let selectedDate = null;
 let selectedHour = null;
 
@@ -20,6 +23,45 @@ function saveData(data) {
         storageKey,
         JSON.stringify(data)
     );
+}
+
+function getSettings() {
+
+    return JSON.parse(
+        localStorage.getItem(settingsKey)
+    ) || {
+        calories: 2000,
+        proteinPercent: 30,
+        carbsPercent: 40,
+        fatPercent: 30
+    };
+}
+
+function saveSettings(settings) {
+
+    localStorage.setItem(
+        settingsKey,
+        JSON.stringify(settings)
+    );
+}
+
+function getSummaryClass(actual, target) {
+
+    if (target <= 0) {
+        return "";
+    }
+
+    let ratio = actual / target;
+
+    if (ratio >= 0.9 && ratio <= 1.1) {
+        return "target-good";
+    }
+
+    if (ratio > 1.1) {
+        return "target-high";
+    }
+
+    return "target-low";
 }
 
 function startOfWeek(date) {
@@ -73,8 +115,7 @@ function updateCalories() {
         return;
     }
 
-    let factor =
-        weight / labelWeight;
+    let factor = weight / labelWeight;
 
     let calories =
         factor * labelCalories;
@@ -173,8 +214,100 @@ function renderDay() {
 
     let data = getData();
 
-    let html =
-        '<div class="grid day">';
+    let dayDate = new Date();
+
+    dayDate.setDate(
+        dayDate.getDate() + dayOffset
+    );
+
+    selectedDate =
+        dayDate
+            .toISOString()
+            .split("T")[0];
+
+    weekTitle.innerText =
+        dayDate.toLocaleDateString();
+
+    let settings =
+        getSettings();
+
+    let targetProtein =
+        Math.round(
+            settings.calories *
+            settings.proteinPercent /
+            100 / 4
+        );
+
+    let targetCarbs =
+        Math.round(
+            settings.calories *
+            settings.carbsPercent /
+            100 / 4
+        );
+
+    let targetFat =
+        Math.round(
+            settings.calories *
+            settings.fatPercent /
+            100 / 9
+        );
+
+    let dayMeals =
+        data.filter(
+            m => m.date === selectedDate
+        );
+
+    let totalCalories =
+        dayMeals.reduce(
+            (s,m)=>s+(m.calories||0),
+            0
+        );
+
+    let totalProtein =
+        dayMeals.reduce(
+            (s,m)=>s+(m.protein||0),
+            0
+        );
+
+    let totalCarbs =
+        dayMeals.reduce(
+            (s,m)=>s+(m.carbs||0),
+            0
+        );
+
+    let totalFat =
+        dayMeals.reduce(
+            (s,m)=>s+(m.fat||0),
+            0
+        );
+
+    let html = `
+    <div class="day-summary">
+
+        <div class="${getSummaryClass(totalCalories, settings.calories)}">
+            Calories<br>
+            ${totalCalories}/${settings.calories}
+        </div>
+
+        <div class="${getSummaryClass(totalProtein, targetProtein)}">
+            Protein<br>
+            ${totalProtein}/${targetProtein}g
+        </div>
+
+        <div class="${getSummaryClass(totalCarbs, targetCarbs)}">
+            Carbs<br>
+            ${totalCarbs}/${targetCarbs}g
+        </div>
+
+        <div class="${getSummaryClass(totalFat, targetFat)}">
+            Fat<br>
+            ${totalFat}/${targetFat}g
+        </div>
+
+    </div>
+
+    <div class="grid day">
+    `;
 
     html +=
         '<div class="cell day-header">Time</div>';
@@ -182,7 +315,7 @@ function renderDay() {
     html +=
         `<div class="cell day-header">${selectedDate}</div>`;
 
-    for (let hour = 0; hour < 24; hour++) {
+    for(let hour = 0; hour < 24; hour++){
 
         html +=
             `<div class="cell time">${hour}:00</div>`;
@@ -193,30 +326,33 @@ function renderDay() {
                 m.hour === hour
             );
 
-        let selected =
-            selectedHour === hour;
-
         html +=
-            `<div class="cell ${selected ? 'selected' : ''}"
+            `<div class="cell ${selectedHour === hour ? "selected" : ""}"
             onclick="selectCell('${selectedDate}',${hour})">`;
 
         meals.forEach(meal => {
 
             html += `
-                <div class="meal">
-                    <b>${meal.dish}</b><br>
-                    ${meal.weight}g<br>
-                    ${meal.calories} cal<br>
-                    P:${meal.protein || 0}g
-                    C:${meal.carbs || 0}g
-                    F:${meal.fat || 0}g<br>
+            <div class="meal">
+                <b>${meal.dish}</b><br>
+                ${meal.weight}g<br>
+                ${meal.calories} cal<br>
+                P:${meal.protein || 0}g
+                C:${meal.carbs || 0}g
+                F:${meal.fat || 0}g<br>
 
-                    <button
-                        class="delete-btn"
-                        onclick="deleteMeal(event,'${meal.date}',${meal.hour},'${meal.dish}',${meal.calories})">
-                        Delete
-                    </button>
-                </div>`;
+                <button
+                    class="delete-btn"
+                    onclick="deleteMeal(
+                        event,
+                        '${meal.date}',
+                        ${meal.hour},
+                        '${meal.dish}',
+                        ${meal.calories}
+                    )">
+                    Delete
+                </button>
+            </div>`;
         });
 
         html += "</div>";
@@ -230,6 +366,30 @@ function renderDay() {
 function renderWeek() {
 
     let data = getData();
+
+    let settings =
+        getSettings();
+
+    let targetProtein =
+        Math.round(
+            settings.calories *
+            settings.proteinPercent /
+            100 / 4
+        );
+
+    let targetCarbs =
+        Math.round(
+            settings.calories *
+            settings.carbsPercent /
+            100 / 4
+        );
+
+    let targetFat =
+        Math.round(
+            settings.calories *
+            settings.fatPercent /
+            100 / 9
+        );
 
     let today = new Date();
 
@@ -293,30 +453,44 @@ function renderWeek() {
                 `<div class="cell"
                 onclick="selectCell('${date}',${hour})">`;
 
-            meals.forEach(meal => {
+           meals.forEach(meal => {
 
-                html += `
-                    <div class="meal">
-                        <b>${meal.dish}</b><br>
-                        ${meal.weight}g<br>
-                        ${meal.calories} cal<br>
-                        P:${meal.protein || 0}g
-                        C:${meal.carbs || 0}g
-                        F:${meal.fat || 0}g<br>
+    html += `
+    <div class="meal">
+        <b>${meal.dish}</b><br>
+        ${meal.weight}g<br>
+        ${meal.calories} cal<br>
+        P:${meal.protein || 0}g
+        C:${meal.carbs || 0}g
+        F:${meal.fat || 0}g<br>
 
-                        <button
-                            class="delete-btn"
-                            onclick="deleteMeal(event,'${meal.date}',${meal.hour},'${meal.dish}',${meal.calories})">
-                            Delete
-                        </button>
-                    </div>`;
-            });
+        <button
+            class="delete-btn"
+            onclick="deleteMeal(
+                event,
+                '${meal.date}',
+                ${meal.hour},
+                '${meal.dish}',
+                ${meal.calories}
+            )">
+            Delete
+        </button>
+    </div>`;
+});
 
             html += "</div>";
         });
     }
 
-    html += `<div class="cell total">Calories</div>`;
+    function addSummaryRow(
+    label,
+    getValue,
+    target,
+    suffix = ""
+) {
+
+    html +=
+        `<div class="cell total">${label}</div>`;
 
     days.forEach(day => {
 
@@ -327,89 +501,48 @@ function renderWeek() {
             data
                 .filter(m => m.date === date)
                 .reduce(
-                    (a, b) => a + b.calories,
+                    (sum, m) =>
+                        sum + getValue(m),
                     0
                 );
 
-        html +=
-            `<div class="cell total">${total} cal</div>`;
+        html += `
+<div class="cell total ${getSummaryClass(
+    total,
+    target
+)}">
+    ${total} / ${target}${suffix}
+</div>`;
     });
+}
 
-    html += `<div class="cell total">Weight</div>`;
+    addSummaryRow(
+    "Calories",
+    m => m.calories || 0,
+    settings.calories,
+    " cal"
+);
 
-    days.forEach(day => {
+addSummaryRow(
+    "Protein",
+    m => m.protein || 0,
+    targetProtein,
+    " g"
+);
 
-        let date =
-            day.toISOString().split("T")[0];
+addSummaryRow(
+    "Carbs",
+    m => m.carbs || 0,
+    targetCarbs,
+    " g"
+);
 
-        let totalWeight =
-            data
-                .filter(m => m.date === date)
-                .reduce(
-                    (a, b) => a + b.weight,
-                    0
-                );
-
-        html +=
-            `<div class="cell total">${totalWeight} g</div>`;
-    });
-
-    html += `<div class="cell total">Protein</div>`;
-
-    days.forEach(day => {
-
-        let date =
-            day.toISOString().split("T")[0];
-
-        let total =
-            data
-                .filter(m => m.date === date)
-                .reduce(
-                    (sum, m) => sum + (m.protein || 0),
-                    0
-                );
-
-        html +=
-            `<div class="cell total">${total} g</div>`;
-    });
-
-    html += `<div class="cell total">Carbs</div>`;
-
-    days.forEach(day => {
-
-        let date =
-            day.toISOString().split("T")[0];
-
-        let total =
-            data
-                .filter(m => m.date === date)
-                .reduce(
-                    (sum, m) => sum + (m.carbs || 0),
-                    0
-                );
-
-        html +=
-            `<div class="cell total">${total} g</div>`;
-    });
-
-    html += `<div class="cell total">Fat</div>`;
-
-    days.forEach(day => {
-
-        let date =
-            day.toISOString().split("T")[0];
-
-        let total =
-            data
-                .filter(m => m.date === date)
-                .reduce(
-                    (sum, m) => sum + (m.fat || 0),
-                    0
-                );
-
-        html +=
-            `<div class="cell total">${total} g</div>`;
-    });
+addSummaryRow(
+    "Fat",
+    m => m.fat || 0,
+    targetFat,
+    " g"
+);
 
     html += "</div>";
 
@@ -437,17 +570,10 @@ saveButton.onclick = () => {
     let labelWeight =
         Number(labelWeightInput.value);
 
-    let labelCalories =
-        Number(labelCaloriesInput.value);
-
-    let labelProtein =
-        Number(labelProteinInput.value);
-
-    let labelCarbs =
-        Number(labelCarbsInput.value);
-
-    let labelFat =
-        Number(labelFatInput.value);
+    if (labelWeight <= 0) {
+        alert("Label Weight must be greater than 0");
+        return;
+    }
 
     let factor =
         weight / labelWeight;
@@ -463,28 +589,48 @@ saveButton.onclick = () => {
 
         weight: weight,
 
-        labelWeight: labelWeight,
-
-        labelCalories: labelCalories,
+        calories: Math.round(
+            factor *
+            Number(labelCaloriesInput.value)
+        ),
 
         protein: Math.round(
-            factor * labelProtein
+            factor *
+            Number(labelProteinInput.value)
         ),
 
         carbs: Math.round(
-            factor * labelCarbs
+            factor *
+            Number(labelCarbsInput.value)
         ),
 
         fat: Math.round(
-            factor * labelFat
-        ),
-
-        calories: Math.round(
-            factor * labelCalories
+            factor *
+            Number(labelFatInput.value)
         )
     });
 
     saveData(data);
+
+    render();
+};
+
+saveTargetsBtn.onclick = () => {
+
+    saveSettings({
+
+        calories:
+            Number(targetCalories.value),
+
+        proteinPercent:
+            Number(targetProteinPercent.value),
+
+        carbsPercent:
+            Number(targetCarbsPercent.value),
+
+        fatPercent:
+            Number(targetFatPercent.value)
+    });
 
     render();
 };
@@ -503,13 +649,23 @@ weekViewBtn.onclick = () => {
 
 prevWeek.onclick = () => {
 
-    weekOffset--;
+    if (viewMode === "day") {
+        dayOffset--;
+    } else {
+        weekOffset--;
+    }
+
     render();
 };
 
 nextWeek.onclick = () => {
 
-    weekOffset++;
+    if (viewMode === "day") {
+        dayOffset++;
+    } else {
+        weekOffset++;
+    }
+
     render();
 };
 
@@ -517,13 +673,7 @@ exportBtn.onclick = () => {
 
     const blob =
         new Blob(
-            [
-                JSON.stringify(
-                    getData(),
-                    null,
-                    2
-                )
-            ],
+            [JSON.stringify(getData(), null, 2)],
             {
                 type: "application/json"
             }
@@ -566,8 +716,22 @@ importFile.onchange = (e) => {
     reader.readAsText(file);
 };
 
-const now =
-    new Date();
+const settings =
+    getSettings();
+
+targetCalories.value =
+    settings.calories;
+
+targetProteinPercent.value =
+    settings.proteinPercent;
+
+targetCarbsPercent.value =
+    settings.carbsPercent;
+
+targetFatPercent.value =
+    settings.fatPercent;
+
+const now = new Date();
 
 selectedDate =
     now.toISOString()
