@@ -10,27 +10,56 @@
 </head>
 <body>
 
-    <h1>Food Journal</h1>
+<div class="page">
 
-    <h2 id="currentHour"></h2>
+    <div class="editor">
 
-    <div class="card">
-        <input id="dish" placeholder="Dish Name">
+        <h3 id="selectedLabel">
+            Select a Time Slot
+        </h3>
 
-        <input id="amount" placeholder="Amount">
+        <input
+            id="dishInput"
+            placeholder="Dish">
 
-        <input id="calories" type="number" placeholder="Calories">
+        <input
+            id="weightInput"
+            type="number"
+            placeholder="Weight Eaten (g)">
 
-        <button onclick="saveMeal()">Save Meal</button>
+        <input
+            id="labelWeightInput"
+            type="number"
+            placeholder="Label Weight (g)">
+
+        <input
+            id="labelCaloriesInput"
+            type="number"
+            placeholder="Label Calories">
+
+        <div id="calculatedCalories">
+            Calories: 0
+        </div>
+
+        <button id="saveButton">
+            Save
+        </button>
+
     </div>
 
-    <h2>Today's Meals</h2>
+    <div class="header">
+        <button id="prevWeek">&lt;</button>
 
-    <div id="mealList"></div>
+        <h2 id="weekTitle"></h2>
 
-    <h2 id="totalCalories">Total: 0 Calories</h2>
+        <button id="nextWeek">&gt;</button>
+    </div>
 
-    <script src="app.js"></script>
+    <div id="calendar"></div>
+
+</div>
+
+<script src="app.js"></script>
 
 </body>
 </html>
