@@ -31,9 +31,9 @@ function getSettings() {
         localStorage.getItem(settingsKey)
     ) || {
         calories: 2000,
-        proteinPercent: 30,
-        carbsPercent: 40,
-        fatPercent: 30
+        proteinPercent: 34,
+        carbsPercent: 38,
+        fatPercent: 28
     };
 }
 
