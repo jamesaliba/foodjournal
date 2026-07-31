@@ -1,65 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Food Journal</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
 
-<div class="page">
+    <div class="page">
 
-    <div class="editor">
+        <div class="editor">
 
-        <h3 id="selectedLabel">
-            Select a Time Slot
-        </h3>
+            <h3 id="selectedLabel"></h3>
 
-        <input
-            id="dishInput"
-            placeholder="Dish">
+            <input
+                id="dishInput"
+                placeholder="Dish">
 
-        <input
-            id="weightInput"
-            type="number"
-            placeholder="Weight Eaten (g)">
+            <input
+                id="weightInput"
+                type="number"
+                placeholder="Weight Eaten (g)">
 
-        <input
-            id="labelWeightInput"
-            type="number"
-            placeholder="Label Weight (g)">
+            <input
+                id="labelWeightInput"
+                type="number"
+                placeholder="Label Weight (g)">
 
-        <input
-            id="labelCaloriesInput"
-            type="number"
-            placeholder="Label Calories">
+            <input
+                id="labelCaloriesInput"
+                type="number"
+                placeholder="Label Calories">
 
-        <div id="calculatedCalories">
-            Calories: 0
+            <input
+                id="labelProteinInput"
+                type="number"
+                placeholder="Label Protein (g)">
+
+            <input
+                id="labelCarbsInput"
+                type="number"
+                placeholder="Label Carbs (g)">
+
+            <input
+                id="labelFatInput"
+                type="number"
+                placeholder="Label Fat (g)">
+
+            <div id="calculatedCalories">
+                Calories: 0
+            </div>
+
+            <div id="calculatedMacros">
+                Protein: 0g | Carbs: 0g | Fat: 0g
+            </div>
+
+            <button id="saveButton">
+                Save Meal
+            </button>
+
         </div>
 
-        <button id="saveButton">
-            Save
-        </button>
+        <div class="toolbar">
+
+            <button id="dayViewBtn">
+                Day
+            </button>
+
+            <button id="weekViewBtn">
+                Week
+            </button>
+
+            <button id="exportBtn">
+                Export
+            </button>
+
+            <label class="importLabel">
+                Import
+                <input id="importFile" type="file">
+            </label>
+
+        </div>
+
+        <div class="header">
+
+            <button id="prevWeek">
+                &lt;&lt;
+            </button>
+
+            <h2 id="weekTitle"></h2>
+
+            <button id="nextWeek">
+                &gt;&gt;
+            </button>
+
+        </div>
+
+        <div id="calendar"></div>
 
     </div>
 
-    <div class="header">
-        <button id="prevWeek">&lt;</button>
-
-        <h2 id="weekTitle"></h2>
-
-        <button id="nextWeek">&gt;</button>
-    </div>
-
-    <div id="calendar"></div>
-
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 
 </body>
+
 </html>
