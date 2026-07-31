@@ -1,9 +1,13 @@
 const storageKey = "foodJournal";
 
 let weekOffset = 0;
-
 let selectedDate = null;
 let selectedHour = null;
+
+let viewMode =
+    window.innerWidth < 768
+        ? "day"
+        : "week";
 
 function getData() {
     return JSON.parse(
@@ -20,13 +24,18 @@ function saveData(data) {
 
 function startOfWeek(date) {
 
-    const d = new Date(date);
+    let d = new Date(date);
 
-    const day = d.getDay();
+    let day = d.getDay();
 
-    const diff = day === 0 ? -6 : 1 - day;
+    let diff =
+        day === 0
+            ? -6
+            : 1 - day;
 
-    d.setDate(d.getDate() + diff);
+    d.setDate(
+        d.getDate() + diff
+    );
 
     d.setHours(0, 0, 0, 0);
 
@@ -35,47 +44,86 @@ function startOfWeek(date) {
 
 function updateCalories() {
 
-    const eaten =
-        Number(
-            document.getElementById("weightInput").value
-        ) || 0;
+    let weight =
+        Number(weightInput.value) || 0;
 
-    const labelWeight =
-        Number(
-            document.getElementById("labelWeightInput").value
-        ) || 0;
+    let labelWeight =
+        Number(labelWeightInput.value) || 0;
 
-    const labelCalories =
-        Number(
-            document.getElementById("labelCaloriesInput").value
-        ) || 0;
+    let labelCalories =
+        Number(labelCaloriesInput.value) || 0;
 
-    let calories = 0;
+    let labelProtein =
+        Number(labelProteinInput.value) || 0;
 
-    if (labelWeight > 0) {
-        calories =
-            (eaten / labelWeight)
-            * labelCalories;
+    let labelCarbs =
+        Number(labelCarbsInput.value) || 0;
+
+    let labelFat =
+        Number(labelFatInput.value) || 0;
+
+    if (labelWeight <= 0) {
+
+        calculatedCalories.innerText =
+            "Calories: 0";
+
+        calculatedMacros.innerText =
+            "Protein: 0g | Carbs: 0g | Fat: 0g";
+
+        return;
     }
 
-    document.getElementById(
-        "calculatedCalories"
-    ).innerText =
-        "Calories: " +
-        calories.toFixed(0);
+    let factor =
+        weight / labelWeight;
+
+    let calories =
+        factor * labelCalories;
+
+    let protein =
+        factor * labelProtein;
+
+    let carbs =
+        factor * labelCarbs;
+
+    let fat =
+        factor * labelFat;
+
+    calculatedCalories.innerText =
+        `Calories: ${Math.round(calories)}`;
+
+    calculatedMacros.innerText =
+        `Protein: ${protein.toFixed(1)}g | Carbs: ${carbs.toFixed(1)}g | Fat: ${fat.toFixed(1)}g`;
 }
 
-document
-.getElementById("weightInput")
-.addEventListener("input", updateCalories);
+weightInput.addEventListener(
+    "input",
+    updateCalories
+);
 
-document
-.getElementById("labelWeightInput")
-.addEventListener("input", updateCalories);
+labelWeightInput.addEventListener(
+    "input",
+    updateCalories
+);
 
-document
-.getElementById("labelCaloriesInput")
-.addEventListener("input", updateCalories);
+labelCaloriesInput.addEventListener(
+    "input",
+    updateCalories
+);
+
+labelProteinInput.addEventListener(
+    "input",
+    updateCalories
+);
+
+labelCarbsInput.addEventListener(
+    "input",
+    updateCalories
+);
+
+labelFatInput.addEventListener(
+    "input",
+    updateCalories
+);
 
 function deleteMeal(
     event,
@@ -87,18 +135,19 @@ function deleteMeal(
 
     event.stopPropagation();
 
-    if (!confirm("Delete this meal?")) {
+    if (!confirm("Delete meal?")) {
         return;
     }
 
     let data = getData();
 
-    const index = data.findIndex(m =>
-        m.date === date &&
-        m.hour === hour &&
-        m.dish === dish &&
-        m.calories === calories
-    );
+    let index =
+        data.findIndex(m =>
+            m.date === date &&
+            m.hour === hour &&
+            m.dish === dish &&
+            m.calories === calories
+        );
 
     if (index !== -1) {
         data.splice(index, 1);
@@ -106,7 +155,7 @@ function deleteMeal(
 
     saveData(data);
 
-    renderWeek();
+    render();
 }
 
 function selectCell(date, hour) {
@@ -114,30 +163,90 @@ function selectCell(date, hour) {
     selectedDate = date;
     selectedHour = hour;
 
-    document.getElementById(
-        "selectedLabel"
-    ).innerText =
+    selectedLabel.innerText =
         `${date} @ ${hour}:00`;
 
-    renderWeek();
+    render();
+}
+
+function renderDay() {
+
+    let data = getData();
+
+    let html =
+        '<div class="grid day">';
+
+    html +=
+        '<div class="cell day-header">Time</div>';
+
+    html +=
+        `<div class="cell day-header">${selectedDate}</div>`;
+
+    for (let hour = 0; hour < 24; hour++) {
+
+        html +=
+            `<div class="cell time">${hour}:00</div>`;
+
+        let meals =
+            data.filter(m =>
+                m.date === selectedDate &&
+                m.hour === hour
+            );
+
+        let selected =
+            selectedHour === hour;
+
+        html +=
+            `<div class="cell ${selected ? 'selected' : ''}"
+            onclick="selectCell('${selectedDate}',${hour})">`;
+
+        meals.forEach(meal => {
+
+            html += `
+                <div class="meal">
+                    <b>${meal.dish}</b><br>
+                    ${meal.weight}g<br>
+                    ${meal.calories} cal<br>
+                    P:${meal.protein || 0}g
+                    C:${meal.carbs || 0}g
+                    F:${meal.fat || 0}g<br>
+
+                    <button
+                        class="delete-btn"
+                        onclick="deleteMeal(event,'${meal.date}',${meal.hour},'${meal.dish}',${meal.calories})">
+                        Delete
+                    </button>
+                </div>`;
+        });
+
+        html += "</div>";
+    }
+
+    html += "</div>";
+
+    calendar.innerHTML = html;
 }
 
 function renderWeek() {
 
-    const today = new Date();
+    let data = getData();
 
-    const weekStart = startOfWeek(today);
+    let today = new Date();
+
+    let weekStart =
+        startOfWeek(today);
 
     weekStart.setDate(
         weekStart.getDate() +
         weekOffset * 7
     );
 
-    const days = [];
+    let days = [];
 
     for (let i = 0; i < 7; i++) {
 
-        const d = new Date(weekStart);
+        let d =
+            new Date(weekStart);
 
         d.setDate(
             weekStart.getDate() + i
@@ -146,99 +255,75 @@ function renderWeek() {
         days.push(d);
     }
 
-    document.getElementById(
-        "weekTitle"
-    ).innerText =
-        days[0].toLocaleDateString()
-        + " - " +
-        days[6].toLocaleDateString();
+    weekTitle.innerText =
+        `${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`;
 
-    const data = getData();
+    let html =
+        '<div class="grid">';
 
-    let html = '<div class="grid">';
-
-    html += '<div class="cell day-header"></div>';
+    html +=
+        '<div class="cell day-header"></div>';
 
     days.forEach(day => {
 
-        const isToday =
-            day.toDateString() ===
-            today.toDateString();
-
         html += `
-        <div class="cell day-header ${isToday ? 'today' : ''}">
-            ${day.toLocaleDateString('en-CA', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-            })}
+        <div class="cell day-header">
+            ${day.toLocaleDateString()}
         </div>`;
     });
 
     for (let hour = 0; hour < 24; hour++) {
 
-        html += `
-        <div class="cell time">
-            ${hour}:00
-        </div>`;
+        html +=
+            `<div class="cell time">${hour}:00</div>`;
 
         days.forEach(day => {
 
-            const date =
-                day.toISOString().split("T")[0];
+            let date =
+                day.toISOString()
+                    .split("T")[0];
 
-            const meals =
+            let meals =
                 data.filter(m =>
                     m.date === date &&
                     m.hour === hour
                 );
 
-            const current =
-                day.toDateString() ===
-                today.toDateString() &&
-                hour === today.getHours();
-
-            const selected =
-                selectedDate === date &&
-                selectedHour === hour;
-
-            html += `
-            <div
-                class="cell ${current ? 'current-hour' : ''} ${selected ? 'selected' : ''}"
-                onclick="selectCell('${date}', ${hour})"
-            >`;
+            html +=
+                `<div class="cell"
+                onclick="selectCell('${date}',${hour})">`;
 
             meals.forEach(meal => {
 
                 html += `
-                <div class="meal">
-                    <b>${meal.dish}</b><br>
-                    ${meal.weight}g<br>
-                    ${meal.calories} cal<br>
+                    <div class="meal">
+                        <b>${meal.dish}</b><br>
+                        ${meal.weight}g<br>
+                        ${meal.calories} cal<br>
+                        P:${meal.protein || 0}g
+                        C:${meal.carbs || 0}g
+                        F:${meal.fat || 0}g<br>
 
-                    <button
-                        class="delete-btn"
-                        onclick="deleteMeal(event,'${meal.date}',${meal.hour},'${meal.dish}',${meal.calories})">
-                        Delete
-                    </button>
-                </div>`;
+                        <button
+                            class="delete-btn"
+                            onclick="deleteMeal(event,'${meal.date}',${meal.hour},'${meal.dish}',${meal.calories})">
+                            Delete
+                        </button>
+                    </div>`;
             });
 
-            html += `</div>`;
+            html += "</div>";
         });
     }
 
-    html += `
-    <div class="cell total">
-        Total
-    </div>`;
+    html += `<div class="cell total">Calories</div>`;
 
     days.forEach(day => {
 
-        const date =
+        let date =
             day.toISOString().split("T")[0];
 
-        const total =
+        let total =
             data
                 .filter(m => m.date === date)
                 .reduce(
@@ -246,116 +331,256 @@ function renderWeek() {
                     0
                 );
 
-        html += `
-        <div class="cell total">
-            ${total} cal
-        </div>`;
+        html +=
+            `<div class="cell total">${total} cal</div>`;
     });
 
-    html += '</div>';
+    html += `<div class="cell total">Weight</div>`;
 
-    document.getElementById(
-        "calendar"
-    ).innerHTML = html;
+    days.forEach(day => {
+
+        let date =
+            day.toISOString().split("T")[0];
+
+        let totalWeight =
+            data
+                .filter(m => m.date === date)
+                .reduce(
+                    (a, b) => a + b.weight,
+                    0
+                );
+
+        html +=
+            `<div class="cell total">${totalWeight} g</div>`;
+    });
+
+    html += `<div class="cell total">Protein</div>`;
+
+    days.forEach(day => {
+
+        let date =
+            day.toISOString().split("T")[0];
+
+        let total =
+            data
+                .filter(m => m.date === date)
+                .reduce(
+                    (sum, m) => sum + (m.protein || 0),
+                    0
+                );
+
+        html +=
+            `<div class="cell total">${total} g</div>`;
+    });
+
+    html += `<div class="cell total">Carbs</div>`;
+
+    days.forEach(day => {
+
+        let date =
+            day.toISOString().split("T")[0];
+
+        let total =
+            data
+                .filter(m => m.date === date)
+                .reduce(
+                    (sum, m) => sum + (m.carbs || 0),
+                    0
+                );
+
+        html +=
+            `<div class="cell total">${total} g</div>`;
+    });
+
+    html += `<div class="cell total">Fat</div>`;
+
+    days.forEach(day => {
+
+        let date =
+            day.toISOString().split("T")[0];
+
+        let total =
+            data
+                .filter(m => m.date === date)
+                .reduce(
+                    (sum, m) => sum + (m.fat || 0),
+                    0
+                );
+
+        html +=
+            `<div class="cell total">${total} g</div>`;
+    });
+
+    html += "</div>";
+
+    calendar.innerHTML = html;
 }
 
-document
-.getElementById("saveButton")
-.addEventListener("click", () => {
+function render() {
 
-    if (
-        selectedDate === null ||
-        selectedHour === null
-    ) {
-        alert("Select a time slot first");
+    if (viewMode === "day") {
+        renderDay();
+    } else {
+        renderWeek();
+    }
+}
+
+saveButton.onclick = () => {
+
+    if (selectedDate === null) {
         return;
     }
 
-    const dish =
-        document.getElementById(
-            "dishInput"
-        ).value;
+    let weight =
+        Number(weightInput.value);
 
-    const weight =
-        Number(
-            document.getElementById(
-                "weightInput"
-            ).value
-        );
+    let labelWeight =
+        Number(labelWeightInput.value);
 
-    const labelWeight =
-        Number(
-            document.getElementById(
-                "labelWeightInput"
-            ).value
-        );
+    let labelCalories =
+        Number(labelCaloriesInput.value);
 
-    const labelCalories =
-        Number(
-            document.getElementById(
-                "labelCaloriesInput"
-            ).value
-        );
+    let labelProtein =
+        Number(labelProteinInput.value);
 
-    const calories =
-        Math.round(
-            (weight / labelWeight)
-            * labelCalories
-        );
+    let labelCarbs =
+        Number(labelCarbsInput.value);
 
-    const data = getData();
+    let labelFat =
+        Number(labelFatInput.value);
+
+    let factor =
+        weight / labelWeight;
+
+    let data = getData();
 
     data.push({
+
         date: selectedDate,
         hour: selectedHour,
-        dish,
-        weight,
-        labelWeight,
-        labelCalories,
-        calories
+
+        dish: dishInput.value,
+
+        weight: weight,
+
+        labelWeight: labelWeight,
+
+        labelCalories: labelCalories,
+
+        protein: Math.round(
+            factor * labelProtein
+        ),
+
+        carbs: Math.round(
+            factor * labelCarbs
+        ),
+
+        fat: Math.round(
+            factor * labelFat
+        ),
+
+        calories: Math.round(
+            factor * labelCalories
+        )
     });
 
     saveData(data);
 
-    document.getElementById("dishInput").value = "";
-    document.getElementById("weightInput").value = "";
-    document.getElementById("labelWeightInput").value = "";
-    document.getElementById("labelCaloriesInput").value = "";
+    render();
+};
 
-    updateCalories();
+dayViewBtn.onclick = () => {
 
-    renderWeek();
-});
+    viewMode = "day";
+    render();
+};
 
-document
-.getElementById("prevWeek")
-.onclick = () => {
+weekViewBtn.onclick = () => {
+
+    viewMode = "week";
+    render();
+};
+
+prevWeek.onclick = () => {
 
     weekOffset--;
-
-    renderWeek();
+    render();
 };
 
-document
-.getElementById("nextWeek")
-.onclick = () => {
+nextWeek.onclick = () => {
 
     weekOffset++;
-
-    renderWeek();
+    render();
 };
 
-const now = new Date();
+exportBtn.onclick = () => {
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    getData(),
+                    null,
+                    2
+                )
+            ],
+            {
+                type: "application/json"
+            }
+        );
+
+    const a =
+        document.createElement("a");
+
+    a.href =
+        URL.createObjectURL(blob);
+
+    a.download =
+        "foodjournal-backup.json";
+
+    a.click();
+};
+
+importFile.onchange = (e) => {
+
+    const file =
+        e.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader =
+        new FileReader();
+
+    reader.onload = () => {
+
+        localStorage.setItem(
+            storageKey,
+            reader.result
+        );
+
+        render();
+    };
+
+    reader.readAsText(file);
+};
+
+const now =
+    new Date();
 
 selectedDate =
-    now.toISOString().split("T")[0];
+    now.toISOString()
+        .split("T")[0];
 
 selectedHour =
     now.getHours();
 
-document.getElementById(
-    "selectedLabel"
-).innerText =
+selectedLabel.innerText =
     `${selectedDate} @ ${selectedHour}:00`;
 
-renderWeek();
+render();
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+}
